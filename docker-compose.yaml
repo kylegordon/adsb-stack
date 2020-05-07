@@ -1,0 +1,203 @@
+version: 3.4
+
+# Things that need to be the .env file...
+# LATITUDE, LONGITUDE, ALTITUDE, BEASTHOST
+
+volumes:
+  ### FIXME ###
+  ### Set these volumes up to use NFS or proper storage
+  flightairmap_db:
+  flightairmap_webapp:
+  graphs1090_rrd:
+  vrsconfig:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/path/to/vrs/config'
+
+networks:
+  adsbnet:
+
+services:
+  readsb:
+    # Not actually required until hardware is present
+    # Credit to https://github.com/mikenye/docker-readsb
+    image: mikenye/readsb:latest
+    tty: true
+    container_name: readsb
+    restart: unless-stopped
+    # devices:
+    #   - /dev/bus/usb/001/007:/dev/bus/usb/001/007
+    ports:
+      - 8080:8080
+      - 30005:30005
+    networks:
+      - adsbnet
+    command:
+      - --dcfilter
+      - --device-type=rtlsdr
+      - --fix
+      - --forward-mlat
+      - --json-location-accuracy=2
+      - --lat=-33.33333
+      - --lon=111.11111
+      - --mlat
+      - --modeac
+      - --ppm=0
+      - --net
+      - --stats-every=3600
+      - --quiet
+      - --write-json=/run/readsb
+
+  piaware:
+    # Credit to https://github.com/mikenye/docker-piaware
+    image: mikenye/piaware:latest
+    tty: true
+    container_name: piaware
+    restart: unless-stopped
+    # Forego USB devices in favour of BEASTHOST and BEASTPORT
+    # devices:
+    #   - /dev/bus/usb/001/004:/dev/bus/usb/001/004
+    ports:
+      - 8080:8080
+      - 30003:30003
+      - 30005:30005
+    networks:
+      - adsbnet
+    environment:
+      - TZ="Australia/Perth"
+      - LAT=-33.33333
+      - LONG=111.11111
+      - BEASTHOST=172.24.32.11
+      - BEASTPORT=30005
+
+  adsbexchange:
+    # Credit to https://github.com/mikenye/docker-adsbexchange
+    image: mikenye/adsbexchange
+    tty: true
+    container_name: adsbx
+    restart: unless-stopped
+    networks:
+      - adsbnet
+    environment:
+      - BEASTHOST=172.24.32.11
+      - BEASTPORT=30005
+      - TZ=Australia/Perth
+      - LAT=-33.33333
+      - LONG=111.11111
+      - ALT=50m
+      - SITENAME=My_Cool_ADSB_Receiver
+      - UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+  fr24feed:
+    # Credit to https://github.com/mikenye/docker-flightradar24
+    image: mikenye/fr24feed:latest
+    tty: true
+    container_name: fr24feed
+    restart: unless-stopped
+    ports:
+      - 8754:8754
+    networks:
+      - adsbnet
+    environment:
+      - TZ="Australia/Perth"
+      - BEASTHOST=172.24.32.11
+      - MLAT=yes
+      - FR24KEY=xxxxxxxxxxx
+
+  rbfeeder:
+    # Credit to https://github.com/mikenye/docker-radarbox
+    image: mikenye/radarbox:latest
+    tty: true
+    container_name: rbfeeder
+    restart: unless-stopped
+    networks:
+      - adsbnet
+    environment:
+      - TZ=Australia/Perth
+      - BEASTHOST=172.24.32.11
+      - LAT=-33.33333
+      - LONG=111.11111
+      - ALT=90
+      - SHARING_KEY=g45643ab345af3c5d5g923a99ffc0de9
+
+  pfclient:
+    # Credit to https://github.com/mikenye/docker-planefinder
+    image: mikenye/planefinder:latest
+    tty: true
+    container_name: pfclient
+    restart: unless-stopped
+    ports:
+      - 30053:30053
+    networks:
+      - adsbnet
+    environment:
+      - TZ=Australia/Perth
+      - BEASTHOST=172.24.32.11
+      - LAT=-33.33333
+      - LONG=111.11111
+      - SHARECODE=zg84632abhf231
+
+  flightairmap:
+    # Credit to https://github.com/mikenye/docker-flightairmap
+    image: mikenye/flightairmap:latest
+    tty: true
+    container_name: flightairmap
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      - TZ=Australia/Perth
+      - BASESTATIONHOST=172.24.32.11
+      - FAM_INSTALLPASSWORD="very_secure_password_12345"
+    volumes:
+      - flightairmap_db:/var/lib/mysql
+      - flightairmap_webapp:/var/www/flightairmap
+
+  virtualradarserver:
+    # Credit to https://github.com/mikenye/docker-virtualradarserver
+    image: vrstest:latest
+    tty: true
+    container_name: vrs
+    restart: unless-stopped
+    volumes:
+      - vrsconfig:/config
+    ports:
+      - 8077:8080
+    environment:
+      - USERNAME=vrsadmin
+      - PASSWORD=vrsadmin
+      - BASESTATIONHOST=172.24.32.11
+
+  piaware2influx:
+    # Credit to https://github.com/mikenye/docker-piaware-to-influx
+    image: mikenye/piaware-to-influx:latest
+    tty: true
+    container_name: piaware2influx
+    restart: unless-stopped
+    environment:
+      - TZ="Australia/Perth"
+      - INFLUXDB_URL=http://172.24.32.13:8086
+      - DUMP1090_HOST=172.24.32.11
+      - VERBOSE_LOGGING=False
+
+  graphs1090:
+    # Credit to https://github.com/mikenye/docker-graphs1090
+    image: mikenye/graphs1090:latest
+    tty: true
+    container_name: graphs1090
+    restart: always
+    volumes:
+      - graphs1090_rrd:/var/lib/collectd/rrd
+    ports:
+      - 8080:80
+    networks:
+      - adsbnet
+    environment:
+      - BEASTHOST=readsb
+      - MLATHOST=piaware
+      - TZ=Australia/Perth
+      - LAT=-33.33333
+      - LONG=111.11111
+
