@@ -155,20 +155,20 @@ services:
       - flightairmap_db:/var/lib/mysql
       - flightairmap_webapp:/var/www/flightairmap
 
-  virtualradarserver:
-    # Credit to https://github.com/mikenye/docker-virtualradarserver
-    image: vrstest:latest
-    tty: true
-    container_name: vrs
-    restart: unless-stopped
-    volumes:
-      - vrsconfig:/config
-    ports:
-      - 8077:8080
-    environment:
-      - USERNAME=vrsadmin
-      - PASSWORD=vrsadmin
-      - BASESTATIONHOST=172.24.32.11
+  # virtualradarserver:
+  #   # Credit to https://github.com/mikenye/docker-virtualradarserver
+  #   image: vrstest:latest
+  #   tty: true
+  #   container_name: vrs
+  #   restart: unless-stopped
+  #   volumes:
+  #     - vrsconfig:/config
+  #   ports:
+  #     - 8077:8080
+  #   environment:
+  #     - USERNAME=vrsadmin
+  #     - PASSWORD=vrsadmin
+  #     - BASESTATIONHOST=172.24.32.11
 
   piaware2influx:
     # Credit to https://github.com/mikenye/docker-piaware-to-influx
