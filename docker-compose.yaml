@@ -1,4 +1,4 @@
-version: 3.4
+version: '3.4'
 
 # Things that need to be the .env file...
 # LATITUDE, LONGITUDE, ALTITUDE, BEASTHOST
