@@ -180,6 +180,7 @@ services:
       - TZ=${TZ}
       - INFLUXDB_URL=http://172.24.32.13:8086
       - DUMP1090_HOST=${BEASTHOST}
+      - DUMP1090_PORT=${BEASTPORT}
       - VERBOSE_LOGGING=False
 
   graphs1090:
