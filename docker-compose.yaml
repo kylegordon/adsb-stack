@@ -40,8 +40,8 @@ services:
       - --fix
       - --forward-mlat
       - --json-location-accuracy=2
-      - --lat=-33.33333
-      - --lon=111.11111
+      - --lat=${LATITUDE}
+      - --lon=${LONGITUDE}
       - --mlat
       - --modeac
       - --ppm=0
@@ -66,10 +66,10 @@ services:
     networks:
       - adsbnet
     environment:
-      - TZ="Australia/Perth"
-      - LAT=-33.33333
-      - LONG=111.11111
-      - BEASTHOST=172.24.32.11
+      - TZ=${TZ}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
+      - BEASTHOST=${BEASTHOST}
       - BEASTPORT=30005
 
   adsbexchange:
@@ -81,11 +81,11 @@ services:
     networks:
       - adsbnet
     environment:
-      - BEASTHOST=172.24.32.11
+      - BEASTHOST=${BEASTHOST}
       - BEASTPORT=30005
-      - TZ=Australia/Perth
-      - LAT=-33.33333
-      - LONG=111.11111
+      - TZ=${TZ}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
       - ALT=50m
       - SITENAME=My_Cool_ADSB_Receiver
       - UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -101,8 +101,8 @@ services:
     networks:
       - adsbnet
     environment:
-      - TZ="Australia/Perth"
-      - BEASTHOST=172.24.32.11
+      - TZ=${TZ}
+      - BEASTHOST=${BEASTHOST}
       - MLAT=yes
       - FR24KEY=xxxxxxxxxxx
 
@@ -115,10 +115,10 @@ services:
     networks:
       - adsbnet
     environment:
-      - TZ=Australia/Perth
-      - BEASTHOST=172.24.32.11
-      - LAT=-33.33333
-      - LONG=111.11111
+      - TZ=${TZ}
+      - BEASTHOST=${BEASTHOST}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
       - ALT=90
       - SHARING_KEY=g45643ab345af3c5d5g923a99ffc0de9
 
@@ -133,10 +133,10 @@ services:
     networks:
       - adsbnet
     environment:
-      - TZ=Australia/Perth
-      - BEASTHOST=172.24.32.11
-      - LAT=-33.33333
-      - LONG=111.11111
+      - TZ=${TZ}
+      - BEASTHOST=${BEASTHOST}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
       - SHARECODE=zg84632abhf231
 
   flightairmap:
@@ -148,8 +148,8 @@ services:
     ports:
       - 8080:80
     environment:
-      - TZ=Australia/Perth
-      - BASESTATIONHOST=172.24.32.11
+      - TZ=${TZ}
+      - BASESTATIONHOST=${BEASTHOST}
       - FAM_INSTALLPASSWORD="very_secure_password_12345"
     volumes:
       - flightairmap_db:/var/lib/mysql
@@ -168,7 +168,7 @@ services:
   #   environment:
   #     - USERNAME=vrsadmin
   #     - PASSWORD=vrsadmin
-  #     - BASESTATIONHOST=172.24.32.11
+  #     - BASESTATIONHOST=${BEASTHOST}
 
   piaware2influx:
     # Credit to https://github.com/mikenye/docker-piaware-to-influx
@@ -177,9 +177,9 @@ services:
     container_name: piaware2influx
     restart: unless-stopped
     environment:
-      - TZ="Australia/Perth"
+      - TZ=${TZ}
       - INFLUXDB_URL=http://172.24.32.13:8086
-      - DUMP1090_HOST=172.24.32.11
+      - DUMP1090_HOST=${BEASTHOST}
       - VERBOSE_LOGGING=False
 
   graphs1090:
@@ -195,9 +195,9 @@ services:
     networks:
       - adsbnet
     environment:
-      - BEASTHOST=readsb
+      - BEASTHOST=${BEASTHOST}
       - MLATHOST=piaware
-      - TZ=Australia/Perth
-      - LAT=-33.33333
-      - LONG=111.11111
+      - TZ=${TZ}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
 
