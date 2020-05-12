@@ -1,7 +1,6 @@
 version: '3.4'
 
-# Things that need to be the .env file...
-# LATITUDE, LONGITUDE, ALTITUDE, BEASTHOST
+# Lots of useful info at https://github.com/mikenye/docker-readsb/wiki/Guide-to-ADS-B-Data-Receiving%2C-Decoding-and-Sharing%2C-Leveraging-RTLSDR-and-Docker
 
 volumes:
   ### FIXME ###
