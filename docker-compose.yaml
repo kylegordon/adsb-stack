@@ -6,14 +6,29 @@ volumes:
   ### FIXME ###
   ### Set these volumes up to use NFS or proper storage
   flightairmap_db:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/flightairmap_db/"
   flightairmap_webapp:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/flightairmap_webapp/"
   graphs1090_rrd:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/graphs1090_rrd/"
   vrsconfig:
     driver: local
     driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/path/to/vrs/config'
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/vrsconfig/"
 
 networks:
   adsbnet:
