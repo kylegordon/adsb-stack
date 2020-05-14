@@ -59,7 +59,7 @@ services:
     # devices:
     #   - /dev/bus/usb/001/004:/dev/bus/usb/001/004
     ports:
-      - 8080:8080
+      - 8083:8080
       - 30003:30003
       - 30005:30005
     networks:
@@ -70,6 +70,7 @@ services:
       - LONG=${LONGITUDE}
       - BEASTHOST=${BEASTHOST}
       - BEASTPORT=30005
+      - PIAWARE_FEEDERID=${PIAWARE_FEEDERID}
 
   adsbexchange:
     # Credit to https://github.com/mikenye/docker-adsbexchange
