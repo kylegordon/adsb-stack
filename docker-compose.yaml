@@ -103,7 +103,7 @@ services:
       - TZ=${TZ}
       - BEASTHOST=${BEASTHOST}
       - MLAT=yes
-      - FR24KEY=xxxxxxxxxxx
+      - FR24KEY=6151e7a51a5177cc
 
   rbfeeder:
     # Credit to https://github.com/mikenye/docker-radarbox
