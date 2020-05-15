@@ -102,8 +102,8 @@ services:
       - LAT=${LATITUDE}
       - LONG=${LONGITUDE}
       - ALT=50m
-      - SITENAME=My_Cool_ADSB_Receiver
-      - UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      - SITENAME=kylegordon_viewpoint
+      - UUID=${ADSBEXCHANGE_UUID}
 
   fr24feed:
     # Credit to https://github.com/mikenye/docker-flightradar24
@@ -135,7 +135,7 @@ services:
       - LAT=${LATITUDE}
       - LONG=${LONGITUDE}
       - ALT=90
-      - SHARING_KEY=g45643ab345af3c5d5g923a99ffc0de9
+      - SHARING_KEY=${RBFEEDER_KEY}
 
   pfclient:
     # Credit to https://github.com/mikenye/docker-planefinder
