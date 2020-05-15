@@ -152,7 +152,7 @@ services:
       - BEASTHOST=${BEASTHOST}
       - LAT=${LATITUDE}
       - LONG=${LONGITUDE}
-      - SHARECODE=zg84632abhf231
+      - SHARECODE=${PLANEFINDER_KEY}
 
   flightairmap:
     # Credit to https://github.com/mikenye/docker-flightairmap
