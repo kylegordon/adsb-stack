@@ -107,6 +107,11 @@ services:
       - ALT=50m
       - SITENAME=kylegordon_viewpoint
       - UUID=${ADSBEXCHANGE_UUID}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   fr24feed:
     # Credit to https://github.com/mikenye/docker-flightradar24
