@@ -88,7 +88,12 @@ services:
       - LONG=${LONGITUDE}
       - BEASTHOST=${BEASTHOST}
       - BEASTPORT=30005
-      - PIAWARE_FEEDERID=${PIAWARE_FEEDERID}
+      - FEEDER_ID=${PIAWARE_FEEDERID}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   adsbexchange:
     # Credit to https://github.com/mikenye/docker-adsbexchange
