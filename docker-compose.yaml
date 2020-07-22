@@ -220,7 +220,7 @@ services:
     volumes:
       - graphs1090_rrd:/var/lib/collectd/rrd
     ports:
-      - 8080:80
+      - 8088:80
     networks:
       - adsbnet
     environment:
@@ -229,4 +229,8 @@ services:
       - TZ=${TZ}
       - LAT=${LATITUDE}
       - LONG=${LONGITUDE}
-
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
