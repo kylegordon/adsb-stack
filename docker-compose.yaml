@@ -61,6 +61,11 @@ services:
       - --stats-every=3600
       - --quiet
       - --write-json=/run/readsb
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   piaware:
     # Credit to https://github.com/mikenye/docker-piaware
@@ -156,6 +161,11 @@ services:
       - LAT=${LATITUDE}
       - LONG=${LONGITUDE}
       - SHARECODE=${PLANEFINDER_KEY}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   flightairmap:
     # Credit to https://github.com/mikenye/docker-flightairmap
