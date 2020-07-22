@@ -118,6 +118,11 @@ services:
       - BEASTHOST=${BEASTHOST}
       - MLAT=yes
       - FR24KEY=6151e7a51a5177cc
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   rbfeeder:
     # Credit to https://github.com/mikenye/docker-radarbox
