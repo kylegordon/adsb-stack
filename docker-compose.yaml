@@ -208,18 +208,21 @@ services:
   #     - PASSWORD=vrsadmin
   #     - BASESTATIONHOST=${BEASTHOST}
 
-  piaware2influx:
-    # Credit to https://github.com/mikenye/docker-piaware-to-influx
-    image: mikenye/piaware-to-influx:latest
+  adsb2influxdb:
+    # Credit to https://github.com/mikenye/docker-adsb-to-influxdb
+    image: mikenye/adsb-to-influxdb:latest
     tty: true
-    container_name: piaware2influx
+    container_name: adsb2influxdb
     restart: unless-stopped
     environment:
-      - TZ=${TZ}
-      - INFLUXDB_URL=http://172.24.32.13:8086
-      - DUMP1090_HOST=${BEASTHOST}
-      - DUMP1090_PORT=${BEASTPORT}
-      - VERBOSE_LOGGING=False
+      - TZ="Europe/London"
+      - INFLUXDBURL=http://172.24.32.13:8086
+      - ADSBHOST=${BEASTHOST}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
 
   graphs1090:
     # Credit to https://github.com/mikenye/docker-graphs1090
