@@ -181,6 +181,21 @@ services:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
 
+  opensky:
+    # Credit to https://github.com/mikenye/docker-opensky-network
+    image: mikenye/opensky-network:latest
+    tty: true
+    container_name: opensky
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - BEASTHOST=${BEASTHOST}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
+      - ALT=${ALTITUDE_METERS}
+      - OPENSKY_USERNAME=${OPENSKY_USERNAME}
+      - OPENSKY_SERIAL=${OPENSKY_SERIAL}
+
   flightairmap:
     # Credit to https://github.com/mikenye/docker-flightairmap
     image: mikenye/flightairmap:latest
