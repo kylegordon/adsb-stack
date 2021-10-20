@@ -146,21 +146,26 @@ services:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
 
-  rbfeeder:
-    # Credit to https://github.com/mikenye/docker-radarbox
-    image: mikenye/radarbox:latest
-    tty: true
-    container_name: rbfeeder
-    restart: unless-stopped
-    networks:
-      - adsbnet
-    environment:
-      - TZ=${TZ}
-      - BEASTHOST=${BEASTHOST}
-      - LAT=${LATITUDE}
-      - LONG=${LONGITUDE}
-      - ALT=90
-      - SHARING_KEY=${RBFEEDER_KEY}
+  # FIXME #1 RBFeeder core dumping frequently
+  # Fault of Radarbox hardcoding for Pi hardware. No workaround
+  # rbfeeder:
+  #   # https://www.radarbox.com/stations/EXTRPI009736
+  #   # Credit to https://github.com/mikenye/docker-radarbox
+  #   image: mikenye/radarbox:latest
+  #   tty: true
+  #   container_name: rbfeeder
+  #   restart: unless-stopped
+  #   networks:
+  #     - adsbnet
+  #   # volumes:
+  #   #   - /tmp/24:/sys/class/thermal/thermal_zone0/temp:ro
+  #   environment:
+  #     - TZ=${TZ}
+  #     - BEASTHOST=${BEASTHOST}
+  #     - LAT=${LATITUDE}
+  #     - LONG=${LONGITUDE}
+  #     - ALT=90
+  #     - SHARING_KEY=${RBFEEDER_KEY}
 
   pfclient:
     # Working feed
