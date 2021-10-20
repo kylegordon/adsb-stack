@@ -72,6 +72,7 @@ services:
         tag: "{{.Name}}"
 
   piaware:
+    # Working feed
     # Credit to https://github.com/mikenye/docker-piaware
     image: mikenye/piaware:latest
     tty: true
@@ -100,6 +101,7 @@ services:
         tag: "{{.Name}}"
 
   adsbexchange:
+    # Working feed
     # Credit to https://github.com/mikenye/docker-adsbexchange
     image: mikenye/adsbexchange
     tty: true
@@ -123,6 +125,7 @@ services:
         tag: "{{.Name}}"
 
   fr24feed:
+    # Working feed
     # Credit to https://github.com/mikenye/docker-flightradar24
     image: mikenye/fr24feed:latest
     tty: true
@@ -160,6 +163,7 @@ services:
       - SHARING_KEY=${RBFEEDER_KEY}
 
   pfclient:
+    # Working feed
     # Credit to https://github.com/mikenye/docker-planefinder
     image: mikenye/planefinder:latest
     tty: true
@@ -212,6 +216,8 @@ services:
       - flightairmap_db:/var/lib/mysql
       - flightairmap_webapp:/var/www/flightairmap
 
+  # FIXME #2 Finish Virtual Radar Server setup
+
   # virtualradarserver:
   #   # Credit to https://github.com/mikenye/docker-virtualradarserver
   #   image: vrstest:latest
@@ -228,6 +234,7 @@ services:
   #     - BASESTATIONHOST=${BEASTHOST}
 
   adsb2influxdb:
+    # Working service
     # Credit to https://github.com/mikenye/docker-adsb-to-influxdb
     image: mikenye/adsb-to-influxdb:latest
     tty: true
