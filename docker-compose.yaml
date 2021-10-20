@@ -33,6 +33,10 @@ networks:
 
 services:
   readsb:
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==planepi"
     # Not actually required until hardware is present
     # Credit to https://github.com/mikenye/docker-readsb
     image: mikenye/readsb:latest
