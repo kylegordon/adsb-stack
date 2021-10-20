@@ -207,7 +207,13 @@ services:
     container_name: flightairmap
     restart: always
     ports:
-      - 8080:80
+      - 8087:80
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-tries=1", "--quiet", "http://viewpoint.house:8087"]
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     environment:
       - TZ=${TZ}
       - BASESTATIONHOST=${BEASTHOST}
@@ -273,3 +279,9 @@ services:
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-tries=1", "--quiet", "http://viewpoint.house:8088"]
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 5
