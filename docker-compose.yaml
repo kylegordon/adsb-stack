@@ -43,8 +43,8 @@ services:
     tty: true
     container_name: readsb
     restart: unless-stopped
-    # devices:
-    #   - /dev/bus/usb/001/007:/dev/bus/usb/001/007
+    devices:
+      - /dev/bus/usb
     ports:
       - 8080:8080
       - 30005:30005
