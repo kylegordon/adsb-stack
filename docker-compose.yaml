@@ -27,6 +27,18 @@ volumes:
       type: nfs4
       o: addr=172.24.32.5,rw
       device: ":/srv/nfs4/store/docker_nfs/vrsconfig/"
+  readsbpb_rrd:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/readsbpb_rrd"
+  readsbpb_autogain:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/store/docker_nfs/readsbpb_autogain"
 
 networks:
   adsbnet:
@@ -39,7 +51,7 @@ services:
           - "node.hostname==planepi"
     # Not actually required until hardware is present
     # Credit to https://github.com/mikenye/docker-readsb
-    image: mikenye/readsb:latest
+    image: mikenye/readsb-protobuf:latest
     tty: true
     container_name: readsb
     restart: unless-stopped
@@ -50,21 +62,21 @@ services:
       - 30005:30005
     networks:
       - adsbnet
-    command:
-      - --dcfilter
-      - --device-type=rtlsdr
-      - --fix
-      - --forward-mlat
-      - --json-location-accuracy=2
-      - --lat=${LATITUDE}
-      - --lon=${LONGITUDE}
-      - --mlat
-      - --modeac
-      - --ppm=0
-      - --net
-      - --stats-every=3600
-      - --quiet
-      - --write-json=/run/readsb
+    environment:
+      - TZ=${TZ}
+      - READSB_DCFILTER=true
+      - READSB_DEVICE_TYPE=rtlsdr
+      - READSB_FIX=true
+      - READSB_GAIN=autogain
+      - READSB_LAT=${LATITUDE}
+      - READSB_LON=${LONGITUDE}
+      - READSB_MODEAC=true
+      - READSB_RX_LOCATION_ACCURACY=2
+      - READSB_STATS_RANGE=true
+      - READSB_NET_ENABLE=true
+    volumes:
+      - readsbpb_rrd:/run/collectd
+      - readsbpb_autogain:/run/autogain
     logging:
       driver: gelf
       options:
