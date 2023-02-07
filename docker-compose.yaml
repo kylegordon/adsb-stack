@@ -200,6 +200,12 @@ services:
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+    labels:
+      - flame.type=application # "app" works too
+      - flame.name=FR24Feed
+      - flame.url=http://viewpoint.house:8754
+      - flame.icon=plane
+      - com.centurylinklabs.watchtower.enable=true
 
   # FIXME #1 RBFeeder core dumping frequently
   # Fault of Radarbox hardcoding for Pi hardware. No workaround
@@ -244,6 +250,12 @@ services:
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+    labels:
+      - flame.type=application # "app" works too
+      - flame.name=PlaneFinder Client
+      - flame.url=http://viewpoint.house:30053
+      - flame.icon=plane
+      - com.centurylinklabs.watchtower.enable=true
 
   opensky:
     # Credit to https://github.com/mikenye/docker-opensky-network
@@ -259,6 +271,8 @@ services:
       - ALT=${ALTITUDE_METERS}
       - OPENSKY_USERNAME=${OPENSKY_USERNAME}
       - OPENSKY_SERIAL=${OPENSKY_SERIAL}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
 
   flightairmap:
     # Credit to https://github.com/mikenye/docker-flightairmap
@@ -281,6 +295,12 @@ services:
     volumes:
       - flightairmap_db:/var/lib/mysql
       - flightairmap_webapp:/var/www/flightairmap
+    labels:
+      - flame.type=application # "app" works too
+      - flame.name=FlightAirMap
+      - flame.url=http://viewpoint.house:8087
+      - flame.icon=plane
+      - com.centurylinklabs.watchtower.enable=true
 
   # FIXME #2 Finish Virtual Radar Server setup
 
@@ -345,3 +365,9 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    labels:
+      - flame.type=application # "app" works too
+      - flame.name=Graphs1090
+      - flame.url=http://viewpoint.house:8088
+      - flame.icon=plane
+      - com.centurylinklabs.watchtower.enable=true
