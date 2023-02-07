@@ -51,7 +51,8 @@ services:
           - "node.hostname==planepi"
     # Not actually required until hardware is present
     # Credit to https://github.com/mikenye/docker-readsb
-    image: mikenye/readsb-protobuf:latest
+    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
+    privileged: true
     tty: true
     container_name: readsb
     restart: unless-stopped
@@ -86,7 +87,7 @@ services:
   piaware:
     # Working feed
     # Credit to https://github.com/mikenye/docker-piaware
-    image: mikenye/piaware:latest
+    image: ghcr.io/sdr-enthusiasts/docker-piaware:latest
     tty: true
     container_name: piaware
     restart: unless-stopped
@@ -115,7 +116,7 @@ services:
   adsbexchange:
     # Working feed
     # Credit to https://github.com/mikenye/docker-adsbexchange
-    image: mikenye/adsbexchange
+    image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
     tty: true
     container_name: adsbx
     restart: unless-stopped
@@ -182,7 +183,7 @@ services:
   pfclient:
     # Working feed
     # Credit to https://github.com/mikenye/docker-planefinder
-    image: mikenye/planefinder:latest
+    image: ghcr.io/sdr-enthusiasts/docker-planefinder:latest
     tty: true
     container_name: pfclient
     restart: unless-stopped
@@ -204,7 +205,7 @@ services:
 
   opensky:
     # Credit to https://github.com/mikenye/docker-opensky-network
-    image: mikenye/opensky-network:latest
+    image: ghcr.io/sdr-enthusiasts/docker-opensky-network:latest
     tty: true
     container_name: opensky
     restart: unless-stopped
@@ -259,7 +260,7 @@ services:
   adsb2influxdb:
     # Working service
     # Credit to https://github.com/mikenye/docker-adsb-to-influxdb
-    image: mikenye/adsb-to-influxdb:latest
+    image: ghcr.io/sdr-enthusiasts/docker-adsb-to-influxdb:latest
     tty: true
     container_name: adsb2influxdb
     restart: unless-stopped
