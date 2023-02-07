@@ -131,11 +131,53 @@ services:
       - ALT=50m
       - SITENAME=kylegordon_viewpoint
       - UUID=${ADSBEXCHANGE_UUID}
+      - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
+      - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
+
+  adsbfi:
+    # Working feed
+    # Credit to https://github.com/mikenye/docker-adsbexchange
+    image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
+    tty: true
+    container_name: adsbfi
+    restart: unless-stopped
+    networks:
+      - adsbnet
+    environment:
+      - BEASTHOST=${BEASTHOST}
+      - BEASTPORT=30005
+      - TZ=${TZ}
+      - LAT=${LATITUDE}
+      - LONG=${LONGITUDE}
+      - ALT=50m
+      - SITENAME=kylegordon_viewpoint
+      - UUID=${ADSBEXCHANGE_UUID}
+      - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
+      - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
     logging:
       driver: gelf
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+
+  # Multifeeder can probably replace adsbfi and adsbx containers
+  multifeeder:
+    image: ghcr.io/sdr-enthusiasts/docker-multifeeder
+    tty: true
+    container_name: multifeeder
+    hostname: multifeeder
+    restart: always
+    environment:
+        - TZ=${TZ}
+        - READSB_NET_CONNECTOR=${BEASTHOST},{BEASTPORT},beast_in;feed.theairtraffic.com,30004,beast_out;
+        - MLAT_USER=SITE_NAME
+        - MLAT_CONFIG=feed.theairtraffic.com,31090
+        - READSB_LAT=${LATITUDE}
+        - READSB_LON=${LONGITUDE}
+        - READSB_ALT=${ALTITUDE_METERS}m
+    tmpfs:
+        - /run/readsb
+        - /var/log
 
   fr24feed:
     # Working feed
