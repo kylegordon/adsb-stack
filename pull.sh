@@ -1,2 +1,4 @@
-docker-compose -H ssh://pi@planepi pull readsb netdata
-docker-compose -H ssh://bagpuss@homeauto.vpn.glasgownet.com pull piaware adsbexchange fr24feed pfclient opensky flightairmap graphs1090
+export DOCKER_HOST=ssh://bagpuss@172.24.32.11
+docker compose -f docker-compose-sdr.yaml pull ultrafeeder readsb Watchtower
+export DOCKER_HOST=ssh://bagpuss@172.24.32.13
+docker compose pull
