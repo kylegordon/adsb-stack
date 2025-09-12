@@ -1,0 +1,93 @@
+name: Copilot Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  copilot-review:
+    runs-on: ubuntu-latest
+    name: Enable Copilot Code Review
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files: |
+            **/*.yml
+            **/*.yaml
+            **/*.sh
+            **/*.py
+            **/*.js
+            **/*.ts
+            **/*.md
+            **/*.json
+            **/*.conf
+            **/*.dockerfile
+            **/Dockerfile*
+            
+      - name: Setup Copilot Review
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            
+            // Check if we already commented
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('🤖 **Copilot Code Review Ready**')
+            );
+            
+            if (botComment) {
+              console.log('Copilot comment already exists');
+              return;
+            }
+            
+            const changedFiles = `${{ steps.changed-files.outputs.all_changed_files }}`.split(' ');
+            const fileList = changedFiles.map(file => `- \`${file}\``).join('\n');
+            
+            const comment = `🤖 **Copilot Code Review Ready**
+            
+            GitHub Copilot is ready to review this PR! The following files have been changed:
+            
+            ${fileList}
+            
+            **💡 How to get Copilot review:**
+            - Comment \`@copilot review\` to get a comprehensive code review
+            - Use \`@copilot explain [filename]\` to understand specific changes
+            - Ask \`@copilot suggest improvements\` for optimization suggestions
+            - Use \`@copilot security check\` for security analysis
+            
+            **🎯 Review focus for this ADS-B project:**
+            - Docker configuration security and optimization
+            - Shell script safety and best practices  
+            - YAML configuration validation
+            - Documentation completeness
+            - Environment variable security
+            
+            Ready for your Copilot review! Just mention \`@copilot\` with your questions.`;
+            
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: comment
+            });
