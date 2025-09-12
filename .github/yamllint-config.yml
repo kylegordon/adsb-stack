@@ -1,0 +1,17 @@
+---
+#####
+# Used to configure yamllint so it skips some checks
+# But also some files too
+#####
+extends: default
+
+rules:
+  line-length: disable
+#  comments: disable
+  comments-indentation: disable
+  document-start: disable
+  indentation: disable
+
+ignore: |
+  .git
+  .github/workflows/linting.yaml
