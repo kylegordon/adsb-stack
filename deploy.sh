@@ -5,7 +5,7 @@ source .env
 if [[ -z $1 ]];
 then
 	echo "No parameter passed"
-	exit
+	exit 1
 else
 	echo "Parameter $1 passed"
 fi
