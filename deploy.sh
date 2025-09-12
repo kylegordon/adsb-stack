@@ -1,4 +1,7 @@
 #!/bin/bash
+
+source .env
+
 if [[ -z $1 ]];
 then
 	echo "No parameter passed"
@@ -13,7 +16,7 @@ then
 	exit
 fi
 
-export DOCKER_HOST=ssh://bagpuss@172.24.32.11
+export DOCKER_HOST=ssh://${SSHUSER}@${SDRHOST}
 docker compose -f docker-compose-sdr.yaml $1 ultrafeeder Watchtower
-export DOCKER_HOST=ssh://bagpuss@172.24.32.13
+export DOCKER_HOST=ssh://${SSHUSER}@${MAINHOST}
 docker compose $1 piaware fr24feed pfclient opensky graphs1090
