@@ -1,88 +1,172 @@
-version: '3.4'
-
+---
 # Lots of useful info at https://github.com/mikenye/docker-readsb/wiki/Guide-to-ADS-B-Data-Receiving%2C-Decoding-and-Sharing%2C-Leveraging-RTLSDR-and-Docker
 
 volumes:
+  acarshub:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/docker_nfs/acarshub/"
   flightairmap_db:
     driver: local
     driver_opts:
       type: nfs4
       o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/flightairmap_db/"
+      device: ":/srv/nfs4/docker_nfs/flightairmap_db/"
   flightairmap_webapp:
     driver: local
     driver_opts:
       type: nfs4
       o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/flightairmap_webapp/"
+      device: ":/srv/nfs4/docker_nfs/flightairmap_webapp/"
   graphs1090_rrd:
     driver: local
     driver_opts:
       type: nfs4
       o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/graphs1090_rrd/"
+      device: ":/srv/nfs4/docker_nfs/graphs1090_rrd/"
   vrsconfig:
     driver: local
     driver_opts:
       type: nfs4
       o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/vrsconfig/"
-  readsbpb_rrd:
-    driver: local
-    driver_opts:
-      type: nfs4
-      o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/readsbpb_rrd"
-  readsbpb_autogain:
-    driver: local
-    driver_opts:
-      type: nfs4
-      o: addr=172.24.32.5,rw
-      device: ":/srv/nfs4/store/docker_nfs/readsbpb_autogain"
+      device: ":/srv/nfs4/docker_nfs/vrsconfig/"
+
 
 networks:
   adsbnet:
+  traefik_proxy:
+    external: true
+    name: frontend_traefik_proxy
 
 services:
-  readsb:
-    deploy:
-      placement:
-        constraints:
-          - "node.hostname==planepi"
-    # Not actually required until hardware is present
-    # Credit to https://github.com/mikenye/docker-readsb
-    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
-    privileged: true
-    tty: true
-    container_name: readsb
-    restart: unless-stopped
-    devices:
-      - /dev/bus/usb
-    ports:
-      - 8080:8080
-      - 30005:30005
-    networks:
-      - adsbnet
-    environment:
-      - TZ=${TZ}
-      - READSB_DCFILTER=true
-      - READSB_DEVICE_TYPE=rtlsdr
-      - READSB_FIX=true
-      - READSB_GAIN=autogain
-      - READSB_LAT=${LATITUDE}
-      - READSB_LON=${LONGITUDE}
-      - READSB_MODEAC=true
-      - READSB_RX_LOCATION_ACCURACY=2
-      - READSB_STATS_RANGE=true
-      - READSB_NET_ENABLE=true
+  Watchtower:
+    image: v2tec/watchtower:latest
+    command: "--label-enable"
+    container_name: Watchtower
     volumes:
-      - readsbpb_rrd:/run/collectd
-      - readsbpb_autogain:/run/autogain
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://172.24.32.13:12201"
-        tag: "{{.Name}}"
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 2 * * *
+      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS}
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    restart: unless-stopped
+
+  # From https://github.com/sdr-enthusiasts/docker-acarshub/blob/main/Setting-Up-ACARSHub.MD
+  # acarshub:
+  #   image: ghcr.io/sdr-enthusiasts/docker-acarshub:latest
+  #   tty: true
+  #   container_name: acarshub
+  #   restart: always
+  #   devices:
+  #     - /dev/bus/usb:/dev/bus/usb
+  #   ports:
+  #     - 8080:80
+  #     - 5550:5550/udp
+  #     - 5555:5555/udp
+  #     - 15550:15550
+  #     - 15555:15555
+  #   volumes:
+  #     - acars_data:/run/acars
+  #   tmpfs:
+  #     - /database:exec,size=64M
+  #     - /run:exec,size=64M
+  #     - /var/log:size=64M
+  #   environment:
+  #     - TZ=Etc/UTC
+  #     - ENABLE_VDLM=false
+  #     - ENABLE_ACARS=false
+  #     - MIN_LOG_LEVEL=3
+  # #      - TAR1090_URL=http://tar1090
+  # #      - IATA_OVERRIDE=UP|UPS|United Parcel Service;GS|FTH|Mountain Aviation (Foothills);GS|EJA|ExecJet
+  # #      - ENABLE_ADSB=true
+  # #      - ADSB_LAT=
+  # #      - ADSB_LON=
+  # #      - ADSB_URL=
+
+  # ### Remove this section if you are NOT decoding ACARS
+  # acarsdec:
+  #   image: ghcr.io/sdr-enthusiasts/docker-acarsdec:latest
+  #   tty: true
+  #   container_name: acarsdec
+  #   restart: always
+  #   devices:
+  #     - /dev/bus/usb:/dev/bus/usb
+  #   environment:
+  #     - QUIET_LOGS=true
+  #     - TZ=Etc/UTC
+  #     - SERIAL=
+  #     - GAIN=-10
+  #     - PPM=0
+  #     - FREQUENCIES=130.025;130.450;131.125;131.550
+  #     - FEED_ID=
+  #     - SERVER=acars_router
+  #   tmpfs:
+  #     - /run:exec,size=64M
+  #     - /var/log:size=64M
+  # #####
+
+  # ### Remove this section if you are NOT decoding VDLM
+
+  # dumpvdl2:
+  #   image: ghcr.io/sdr-enthusiasts/docker-dumpvdl2:latest
+  #   tty: true
+  #   container_name: dumpvdl2
+  #   restart: always
+  #   devices:
+  #     - /dev/bus/usb:/dev/bus/usb
+  #   environment:
+  #     - QUIET_LOGS=true
+  #     - TZ=Etc/UTC
+  #     - SERIAL=
+  #     - GAIN=40.0
+  #     - PPM=0
+  #     - FREQUENCIES=136650000;136700000;136975000;136925000;136800000
+  #     - FEED_ID=
+  #     - VDLM_FILTER_ENABLE=true
+  #     - ZMQ_MODE=server
+  #     - ZMQ_ENDPOINT=tcp://0.0.0.0:45555
+  #     - SERVER=
+  #   tmpfs:
+  #     - /run:exec,size=64M
+  #     - /var/log:size=64M
+
+  # acars_router:
+  #   image: ghcr.io/sdr-enthusiasts/acars_router:latest
+  #   labels:
+  #     - "autoheal=true"
+  #   tty: true
+  #   ports:
+  #     - 55555:15555
+  #     - 55550:15550
+  #   container_name: acars_router
+  #   restart: always
+  #   environment:
+  #     - TZ=${FEEDER_TZ}
+  #     # The line below should be uncommented if you are receiving acars data from acarsdec AND do not want to feed
+  #     #- AR_SEND_UDP_ACARS=acarshub:5550
+  #     # The line below should be uncommented if you are receiving acars data from acarsdec AND want to feed airframes
+  #     #- AR_SEND_UDP_ACARS=acarshub:5550;feed.airframes.io:5550
+  #     # The line below should uncommented if you are receiving VDLM and DO NOT want to feed aiframes
+  #     #- AR_SEND_UDP_VDLM2=acarshub:5555
+  #     # The line below should uncommented if you are receiving VDLM, using dumpvdl2 AND want to feed airframes
+  #     #- AR_SEND_UDP_VDLM2=acarshub:5555;feed.airframes.io:5552
+  #     # The line below should uncommented if you are receiving VDLM, using vdlm2dec AND want to feed airframes
+  #     #- AR_SEND_UDP_VDLM2=acarshub:5555;feed.airframes.io:5555
+  #     # The line below should uncommented if you are receiving dumpvdl2 AND using ZMQ (recommended)
+  #     #- AR_RECV_ZMQ_VDLM2=dumpvdl2:45555
+  #   tmpfs:
+  #     - /run:exec,size=64M
+  #     - /var/log
 
   piaware:
     # Working feed
@@ -95,11 +179,12 @@ services:
     # devices:
     #   - /dev/bus/usb/001/004:/dev/bus/usb/001/004
     ports:
-      - 8083:8080
+      # - 8083:8080
       - 30003:30003
       - 30005:30005
     networks:
       - adsbnet
+      - traefik_proxy
     environment:
       - TZ=${TZ}
       - LAT=${LATITUDE}
@@ -112,99 +197,126 @@ services:
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1"
+      start_period: 15s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=frontend_traefik_proxy
+      - traefik.http.routers.piaware.rule=Host(`piaware.viewpoint.house`)
+      - traefik.http.routers.piaware.entrypoints=websecure
+      - traefik.http.routers.piaware.tls=true
+      - traefik.http.routers.piaware.tls.certresolver=letsencrypt
+      - traefik.http.services.piaware01.loadbalancer.server.port=8080
+      - traefik.http.services.piaware01.loadbalancer.healthcheck.path=/
+      - traefik.http.services.piaware01.loadbalancer.healthcheck.port=8080
+      - homepage.group=SDR
+      - homepage.name=PiAware
+      - homepage.icon=mdi-airplane
+      - homepage.href=https://piaware.viewpoint.house
+      - homepage.description=PiAware
+      - com.centurylinklabs.watchtower.enable=true
 
-  adsbexchange:
-    # Working feed
-    # Credit to https://github.com/mikenye/docker-adsbexchange
-    image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
-    tty: true
-    container_name: adsbx
-    restart: unless-stopped
-    networks:
-      - adsbnet
-    environment:
-      - BEASTHOST=${BEASTHOST}
-      - BEASTPORT=30005
-      - TZ=${TZ}
-      - LAT=${LATITUDE}
-      - LONG=${LONGITUDE}
-      - ALT=50m
-      - SITENAME=kylegordon_viewpoint
-      - UUID=${ADSBEXCHANGE_UUID}
-      - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
-      - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
+  # adsbexchange:
+  #   # Working feed
+  #   # Credit to https://github.com/mikenye/docker-adsbexchange
+  #   image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
+  #   tty: true
+  #   container_name: adsbx
+  #   restart: unless-stopped
+  #   networks:
+  #     - adsbnet
+  #   environment:
+  #     - BEASTHOST=${BEASTHOST}
+  #     - BEASTPORT=30005
+  #     - TZ=${TZ}
+  #     - LAT=${LATITUDE}
+  #     - LONG=${LONGITUDE}
+  #     - ALT=50m
+  #     - SITENAME=kylegordon_viewpoint
+  #     - UUID=${ADSBEXCHANGE_UUID}
+  #     - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
+  #     - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsbexchange.com
+  #   labels:
+  #     - com.centurylinklabs.watchtower.enable=true
 
-  adsbfi:
-    # Working feed
-    # Credit to https://github.com/mikenye/docker-adsbexchange
-    image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
-    tty: true
-    container_name: adsbfi
-    restart: unless-stopped
-    networks:
-      - adsbnet
-    environment:
-      - BEASTHOST=${BEASTHOST}
-      - BEASTPORT=30005
-      - TZ=${TZ}
-      - LAT=${LATITUDE}
-      - LONG=${LONGITUDE}
-      - ALT=50m
-      - SITENAME=kylegordon_viewpoint
-      - UUID=${ADSBEXCHANGE_UUID}
-      - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
-      - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://172.24.32.13:12201"
-        tag: "{{.Name}}"
+  # adsbfi:
+  #   # Working feed
+  #   # Credit to https://github.com/mikenye/docker-adsbexchange
+  #   image: ghcr.io/sdr-enthusiasts/docker-adsbexchange
+  #   tty: true
+  #   container_name: adsbfi
+  #   restart: unless-stopped
+  #   networks:
+  #     - adsbnet
+  #   environment:
+  #     - BEASTHOST=${BEASTHOST}
+  #     - BEASTPORT=30005
+  #     - TZ=${TZ}
+  #     - LAT=${LATITUDE}
+  #     - LONG=${LONGITUDE}
+  #     - ALT=50m
+  #     - SITENAME=kylegordon_viewpoint
+  #     - UUID=${ADSBEXCHANGE_UUID}
+  #     - ADSB_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
+  #     - MLAT_FEED_DESTINATION_HOSTNAME=feed.adsb.fi
+  #   logging:
+  #     driver: gelf
+  #     options:
+  #       gelf-address: "udp://172.24.32.13:12201"
+  #       tag: "{{.Name}}"
+  #   labels:
+  #     - com.centurylinklabs.watchtower.enable=true
 
   # Multifeeder can probably replace adsbfi and adsbx containers
-  multifeeder:
-    image: ghcr.io/sdr-enthusiasts/docker-multifeeder
-    tty: true
-    container_name: multifeeder
-    hostname: multifeeder
-    restart: always
-    environment:
-        - TZ=${TZ}
-        - READSB_NET_CONNECTOR=${BEASTHOST},{BEASTPORT},beast_in;feed.theairtraffic.com,30004,beast_out;
-        - MLAT_USER=SITE_NAME
-        - MLAT_CONFIG=feed.theairtraffic.com,31090
-        - READSB_LAT=${LATITUDE}
-        - READSB_LON=${LONGITUDE}
-        - READSB_ALT=${ALTITUDE_METERS}m
-    tmpfs:
-        - /run/readsb
-        - /var/log
 
   fr24feed:
     # Working feed
     # Credit to https://github.com/mikenye/docker-flightradar24
-    image: mikenye/fr24feed:latest
+    # image: mikenye/fr24feed:latest
+    image: ghcr.io/sdr-enthusiasts/docker-flightradar24
     tty: true
     container_name: fr24feed
     restart: unless-stopped
-    ports:
-      - 8754:8754
+    # ports:
+      # - 8754:8754
     networks:
       - adsbnet
+      - traefik_proxy
     environment:
       - TZ=${TZ}
       - BEASTHOST=${BEASTHOST}
       - MLAT=yes
-      - FR24KEY=6151e7a51a5177cc
+      - FR24KEY=${FR24KEY}
     logging:
       driver: gelf
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8754"]
+      start_period: 15s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     labels:
-      - flame.type=application # "app" works too
-      - flame.name=FR24Feed
-      - flame.url=http://viewpoint.house:8754
-      - flame.icon=plane
+      - traefik.enable=true
+      - traefik.docker.network=frontend_traefik_proxy
+      - traefik.http.routers.fr24feed.rule=Host(`fr24feed.viewpoint.house`)
+      - traefik.http.routers.fr24feed.entrypoints=websecure
+      - traefik.http.routers.fr24feed.tls=true
+      - traefik.http.routers.fr24feed.tls.certresolver=letsencrypt
+      - traefik.http.services.fr24feed.loadbalancer.server.port=8754
+      - traefik.http.services.fr24feed.loadbalancer.healthcheck.path=/
+      - traefik.http.services.fr24feed.loadbalancer.healthcheck.port=8754
+      - homepage.group=SDR
+      - homepage.name=FR24Feed
+      - homepage.icon=mdi-airplane
+      - homepage.href=https://fr24feed.viewpoint.house
+      - homepage.description=FR24Feed
       - com.centurylinklabs.watchtower.enable=true
 
   # FIXME #1 RBFeeder core dumping frequently
@@ -235,10 +347,11 @@ services:
     tty: true
     container_name: pfclient
     restart: unless-stopped
-    ports:
-      - 30053:30053
+    # ports:
+    #   - 30053:30053
     networks:
       - adsbnet
+      - traefik_proxy
     environment:
       - TZ=${TZ}
       - BEASTHOST=${BEASTHOST}
@@ -251,10 +364,20 @@ services:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
     labels:
-      - flame.type=application # "app" works too
-      - flame.name=PlaneFinder Client
-      - flame.url=http://viewpoint.house:30053
-      - flame.icon=plane
+      - traefik.enable=true
+      - traefik.docker.network=frontend_traefik_proxy
+      - traefik.http.routers.planefinder.rule=Host(`planefinder.viewpoint.house`)
+      - traefik.http.routers.planefinder.entrypoints=websecure
+      - traefik.http.routers.planefinder.tls=true
+      - traefik.http.routers.planefinder.tls.certresolver=letsencrypt
+      - traefik.http.services.planefinder.loadbalancer.server.port=30053
+      - traefik.http.services.planefinder.loadbalancer.healthcheck.path=/
+      - traefik.http.services.planefinder.loadbalancer.healthcheck.port=30053
+      - homepage.group=SDR
+      - homepage.name=PlaneFinder
+      - homepage.icon=mdi-airplane
+      - homepage.href=https://planefinder.viewpoint.house
+      - homepage.description=PlaneFinder
       - com.centurylinklabs.watchtower.enable=true
 
   opensky:
@@ -263,6 +386,8 @@ services:
     tty: true
     container_name: opensky
     restart: unless-stopped
+    networks:
+      - adsbnet
     environment:
       - TZ=${TZ}
       - BEASTHOST=${BEASTHOST}
@@ -274,68 +399,6 @@ services:
     labels:
       - com.centurylinklabs.watchtower.enable=true
 
-  flightairmap:
-    # Credit to https://github.com/mikenye/docker-flightairmap
-    image: mikenye/flightairmap:latest
-    tty: true
-    container_name: flightairmap
-    restart: always
-    ports:
-      - 8087:80
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-tries=1", "--quiet", "http://viewpoint.house:8087"]
-      start_period: 60s
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    environment:
-      - TZ=${TZ}
-      - BASESTATIONHOST=${BEASTHOST}
-      - FAM_INSTALLPASSWORD="very_secure_password_12345"
-    volumes:
-      - flightairmap_db:/var/lib/mysql
-      - flightairmap_webapp:/var/www/flightairmap
-    labels:
-      - flame.type=application # "app" works too
-      - flame.name=FlightAirMap
-      - flame.url=http://viewpoint.house:8087
-      - flame.icon=plane
-      - com.centurylinklabs.watchtower.enable=true
-
-  # FIXME #2 Finish Virtual Radar Server setup
-
-  # virtualradarserver:
-  #   # Credit to https://github.com/mikenye/docker-virtualradarserver
-  #   image: vrstest:latest
-  #   tty: true
-  #   container_name: vrs
-  #   restart: unless-stopped
-  #   volumes:
-  #     - vrsconfig:/config
-  #   ports:
-  #     - 8077:8080
-  #   environment:
-  #     - USERNAME=vrsadmin
-  #     - PASSWORD=vrsadmin
-  #     - BASESTATIONHOST=${BEASTHOST}
-
-  adsb2influxdb:
-    # Working service
-    # Credit to https://github.com/mikenye/docker-adsb-to-influxdb
-    image: ghcr.io/sdr-enthusiasts/docker-adsb-to-influxdb:latest
-    tty: true
-    container_name: adsb2influxdb
-    restart: unless-stopped
-    environment:
-      - TZ="Europe/London"
-      - INFLUXDBURL=http://172.24.32.13:8086
-      - ADSBHOST=${BEASTHOST}
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://172.24.32.13:12201"
-        tag: "{{.Name}}"
-
   graphs1090:
     # Credit to https://github.com/mikenye/docker-graphs1090
     image: mikenye/graphs1090:latest
@@ -344,10 +407,11 @@ services:
     restart: always
     volumes:
       - graphs1090_rrd:/var/lib/collectd/rrd
-    ports:
-      - 8088:80
+    # ports:
+    #   - 8088:80
     networks:
       - adsbnet
+      - traefik_proxy
     environment:
       - BEASTHOST=${BEASTHOST}
       - MLATHOST=piaware
@@ -359,15 +423,26 @@ services:
       options:
         gelf-address: "udp://172.24.32.13:12201"
         tag: "{{.Name}}"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-tries=1", "--quiet", "http://viewpoint.house:8088"]
-      start_period: 60s
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    # healthcheck:
+    #   # test: ["CMD", "wget", "--spider", "-tries=1", "--quiet", "http://viewpoint.house:8088"]
+    #   test: ["CMD", "timeout", "10s", "bash", "-c", "':>", "/dev/tcp/127.0.0.1/800'", "||", "exit", "1"]
+    #   start_period: 60s
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
     labels:
-      - flame.type=application # "app" works too
-      - flame.name=Graphs1090
-      - flame.url=http://viewpoint.house:8088
-      - flame.icon=plane
+      - traefik.enable=true
+      - traefik.docker.network=frontend_traefik_proxy
+      - traefik.http.routers.graphs1090.rule=Host(`graphs1090.viewpoint.house`)
+      - traefik.http.routers.graphs1090.entrypoints=websecure
+      - traefik.http.routers.graphs1090.tls=true
+      - traefik.http.routers.graphs1090.tls.certresolver=letsencrypt
+      - traefik.http.services.graphs1090.loadbalancer.server.port=80
+      - traefik.http.services.graphs1090.loadbalancer.healthcheck.path=/
+      - traefik.http.services.graphs1090.loadbalancer.healthcheck.port=80
+      - homepage.group=SDR
+      - homepage.name=Graphs1090
+      - homepage.icon=mdi-airplane
+      - homepage.href=https://graphs1090.viewpoint.house
+      - homepage.description=Graphs1090
       - com.centurylinklabs.watchtower.enable=true
