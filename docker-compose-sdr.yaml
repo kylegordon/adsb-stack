@@ -1,0 +1,200 @@
+---
+
+volumes:
+  readsbpb_rrd:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/docker_nfs/readsbpb_rrd"
+  readsbpb_autogain:
+    driver: local
+    driver_opts:
+      type: nfs4
+      o: addr=172.24.32.5,rw
+      device: ":/srv/nfs4/docker_nfs/readsbpb_autogain"
+
+services:
+  readsb:
+    deploy:
+      placement:
+        constraints:
+          - "node.hostname==planepi"
+    # Not actually required until hardware is present
+    # Credit to https://github.com/mikenye/docker-readsb
+    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
+    privileged: true
+    tty: true
+    container_name: readsb
+    restart: unless-stopped
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    ports:
+      - 8080:8080
+      - 30005:30005
+    # networks:
+    #   - adsbnet
+    environment:
+      - TZ=${TZ}
+      - READSB_DCFILTER=true
+      - READSB_DEVICE_TYPE=rtlsdr
+      - READSB_FIX=true
+      - READSB_GAIN=autogain
+      - READSB_LAT=${LATITUDE}
+      - READSB_LON=${LONGITUDE}
+      - READSB_MODEAC=true
+      - READSB_RX_LOCATION_ACCURACY=2
+      - READSB_STATS_RANGE=true
+      - READSB_NET_ENABLE=true
+      - INFLUXDBURL=${INFLUXDBURL}
+      - INFLUXDB_V2=true
+      - INFLUXDB_V2_BUCKET=${INFLUXDB_V2_BUCKET}
+      - INFLUXDB_V2_ORG=${INFLUXDB_V2_ORG}
+      - INFLUXDB_V2_TOKEN=${INFLUXDB_V2_TOKEN}
+    volumes:
+      - readsbpb_rrd:/run/collectd
+      - readsbpb_autogain:/run/autogain
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://172.24.32.13:12201"
+        tag: "{{.Name}}"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  ultrafeeder:
+    # image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
+    # Note - if you want to enable telegraf for use with InfluxDB/Prometheus and Grafana,
+    # use the following image instead:
+    image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder:telegraf
+    container_name: ultrafeeder
+    hostname: ultrafeeder
+    restart: unless-stopped
+    device_cgroup_rules:
+      - "c 189:* rwm"
+    ports:
+      - 8080:80 # to expose the web interface
+      - 30005:30005 # to expose the ADS-B data feed (for fr24feed)
+      - 9273-9274:9273-9274 # to expose the statistics interface to Prometheus
+    environment:
+      # --------------------------------------------------
+      # general parameters:
+      - LOGLEVEL=error
+      - TZ=${FEEDER_TZ}
+      # --------------------------------------------------
+      # SDR related parameters:
+      - READSB_DEVICE_TYPE=rtlsdr
+      - READSB_GAIN=auto
+      - READSB_RTLSDR_DEVICE=${ADSB_SDR_SERIAL}
+      - READSB_RTLSDR_PPM=${ADSB_SDR_PPM}
+      #
+      # --------------------------------------------------
+      # readsb/decoder parameters:
+      - READSB_LAT=${FEEDER_LAT}
+      - READSB_LON=${FEEDER_LONG}
+      - READSB_ALT=${FEEDER_ALT_M}m
+      - READSB_RX_LOCATION_ACCURACY=2
+      - READSB_STATS_RANGE=true
+      #
+      # --------------------------------------------------
+      # Sources and Aggregator connections:
+      # Notes - remove the ones you are not using / feeding
+      #       - remove "adsb,dump978,30978,uat_in;" if you don't have dump978 and a UAT dongle connected to your station
+      #       - !!! make sure that each line ends with a semicolon ";",  with the exception of the last line which shouldn't have a ";" !!!
+      - ULTRAFEEDER_CONFIG=
+        adsb,dump978,30978,uat_in;
+        adsb,feed.adsb.fi,30004,beast_reduce_plus_out;
+        adsb,in.adsb.lol,30004,beast_reduce_plus_out;
+        adsb,feed.airplanes.live,30004,beast_reduce_plus_out;
+        adsb,feed.planespotters.net,30004,beast_reduce_plus_out;
+        adsb,feed.theairtraffic.com,30004,beast_reduce_plus_out;
+        adsb,data.avdelphi.com,24999,beast_reduce_plus_out;
+        adsb,skyfeed.hpradar.com,30004,beast_reduce_plus_out;
+        adsb,feed.radarplane.com,30001,beast_reduce_plus_out;
+        adsb,dati.flyitalyadsb.com,4905,beast_reduce_plus_out;
+        mlat,feed.adsb.fi,31090,39000;
+        mlat,in.adsb.lol,31090,39001;
+        mlat,feed.airplanes.live,31090,39002;
+        mlat,mlat.planespotters.net,31090,39003;
+        mlat,feed.theairtraffic.com,31090,39004;
+        mlat,skyfeed.hpradar.com,31090,39005;
+        mlat,feed.radarplane.com,31090,39006;
+        mlat,dati.flyitalyadsb.com,30100,39007;
+        mlathub,piaware.viewpoint.house,30003,beast_in;
+        mlathub,rbfeeder,30105,beast_in;
+        mlathub,radarvirtuel,30105,beast_in;
+        mlathub,planewatch,30105,beast_in
+      # If you really want to feed ADSBExchange, you can do so by adding this above:
+      #        adsb,feed1.adsbexchange.com,30004,beast_reduce_plus_out,uuid=${ADSBX_UUID};
+      #        mlat,feed.adsbexchange.com,31090,39008,uuid=${ADSBX_UUID}
+      #
+      # --------------------------------------------------
+      - UUID=${MULTIFEEDER_UUID}
+      - MLAT_USER=${FEEDER_NAME}
+      #
+      # --------------------------------------------------
+      # TAR1090 (Map Web Page) parameters:
+      - UPDATE_TAR1090=true
+      - TAR1090_DEFAULTCENTERLAT=${FEEDER_LAT}
+      - TAR1090_DEFAULTCENTERLON=${FEEDER_LONG}
+      - TAR1090_MESSAGERATEINTITLE=true
+      - TAR1090_PAGETITLE=${FEEDER_NAME}
+      - TAR1090_PLANECOUNTINTITLE=true
+      - TAR1090_ENABLE_AC_DB=true
+      - TAR1090_FLIGHTAWARELINKS=true
+      - HEYWHATSTHAT_PANORAMA_ID=${FEEDER_HEYWHATSTHAT_ID}
+      - HEYWHATSTHAT_ALTS=${FEEDER_HEYWHATSTHAT_ALTS}
+      - TAR1090_SITESHOW=true
+      - TAR1090_RANGE_OUTLINE_COLORED_BY_ALTITUDE=true
+      - TAR1090_RANGE_OUTLINE_WIDTH=2.0
+      - TAR1090_RANGERINGSDISTANCES=50,100,150,200
+      - TAR1090_RANGERINGSCOLORS='#1A237E','#0D47A1','#42A5F5','#64B5F6'
+      - TAR1090_USEROUTEAPI=true
+      #
+      # --------------------------------------------------
+      # GRAPHS1090 (Decoder and System Status Web Page) parameters:
+      # The two 978 related parameters should only be included if you are running dump978 for UAT reception (USA only)
+      - GRAPHS1090_DARKMODE=true
+      # - ENABLE_978=yes
+      # - URL_978=http://dump978/skyaware978
+      #
+      # --------------------------------------------------
+      # Prometheus and InfluxDB connection parameters:
+      # (See above for the correct image tag you must use to enable this)
+      - INFLUXDBV2_URL=${INFLUXDBURL}
+      - INFLUXDBV2_TOKEN=${INFLUXDB_V2_TOKEN}
+      - INFLUXDBV2_BUCKET=${INFLUXDB_V2_BUCKET}
+      - INFLUXDBV2_ORG=${INFLUXDB_V2_ORG}
+      - PROMETHEUS_ENABLE=true
+    volumes:
+      - /opt/adsb/ultrafeeder/globe_history:/var/globe_history
+      - /opt/adsb/ultrafeeder/graphs1090:/var/lib/collectd
+      - /proc/diskstats:/proc/diskstats:ro
+      - /dev/bus/usb:/dev/bus/usb
+    tmpfs:
+      - /run:exec,size=256M
+      - /tmp:size=128M
+      - /var/log:size=32M
+
+  Watchtower:
+    image: containrrr/watchtower:arm64v8-latest
+    command: "--label-enable"
+    container_name: Watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    security_opt:
+      - label:disable
+    user: 0:0
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 2 * * *
+      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS}
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    restart: unless-stopped
