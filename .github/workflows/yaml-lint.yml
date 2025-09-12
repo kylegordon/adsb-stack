@@ -51,14 +51,14 @@ jobs:
               min-spaces-from-content: 1
           EOF
 
-      - name: Lint YAML files
-        run: |
-          # Find all YAML files and lint them
-          find . -type f \( -name "*.yml" -o -name "*.yaml" \) \
-            -not -path "./.git/*" | xargs -r yamllint -c .yamllint.yml
-
       - name: List checked files
         run: |
           echo "The following YAML files were checked:"
           find . -type f \( -name "*.yml" -o -name "*.yaml" \) \
             -not -path "./.git/*"
+
+      - name: Lint YAML files
+        run: |
+          # Find all YAML files and lint them
+          find . -type f \( -name "*.yml" -o -name "*.yaml" \) \
+            -not -path "./.git/*" | xargs -r yamllint -c .yamllint.yml
