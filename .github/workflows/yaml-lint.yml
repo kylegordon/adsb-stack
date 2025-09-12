@@ -55,7 +55,7 @@ jobs:
         run: |
           # Find all YAML files and lint them
           find . -type f \( -name "*.yml" -o -name "*.yaml" \) \
-            -not -path "./.git/*" | xargs yamllint -c .yamllint.yml
+            -not -path "./.git/*" | xargs -r yamllint -c .yamllint.yml
 
       - name: List checked files
         run: |
