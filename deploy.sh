@@ -13,7 +13,7 @@ fi
 if [ "$1" != "pull" ] && [ "$1" != "up" ]
 then
 	echo "Parameter must be 'pull' or 'up'"
-	exit
+	exit 1
 fi
 
 export DOCKER_HOST=ssh://${SSHUSER}@${SDRHOST}
