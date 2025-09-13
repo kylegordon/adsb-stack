@@ -345,8 +345,6 @@ services:
     tty: true
     container_name: pfclient
     restart: unless-stopped
-    # ports:
-    #   - 30053:30053
     networks:
       - adsbnet
       - traefik_proxy
