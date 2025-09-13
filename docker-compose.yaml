@@ -405,8 +405,6 @@ services:
     restart: always
     volumes:
       - graphs1090_rrd:/var/lib/collectd/rrd
-    # ports:
-    #   - 8088:80
     networks:
       - adsbnet
       - traefik_proxy
