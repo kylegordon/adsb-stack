@@ -10,7 +10,7 @@ else
 	echo "Parameter $1 passed"
 fi
 
-if [ $1 != "pull" ] && [ $1 != "up" ]
+if [ "$1" != "pull" ] && [ "$1" != "up" ]
 then
 	echo "Parameter must be 'pull' or 'up'"
 	exit
