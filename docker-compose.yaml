@@ -35,6 +35,7 @@ volumes:
 
 networks:
   adsbnet:
+    driver: bridge
   traefik_proxy:
     external: true
     name: frontend_traefik_proxy
