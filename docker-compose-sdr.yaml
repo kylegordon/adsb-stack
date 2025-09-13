@@ -30,8 +30,8 @@ services:
     ports:
       - 8080:8080
       - 30005:30005
-    # networks:
-    #   - adsbnet
+    networks:
+      - adsbnet
     environment:
       - TZ=${TZ}
       - READSB_DCFILTER=true
