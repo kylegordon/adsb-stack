@@ -178,7 +178,6 @@ services:
     # devices:
     #   - /dev/bus/usb/001/004:/dev/bus/usb/001/004
     ports:
-      # - 8083:8080
       - 30003:30003
       - 30005:30005
     networks:
@@ -346,8 +345,6 @@ services:
     tty: true
     container_name: pfclient
     restart: unless-stopped
-    # ports:
-    #   - 30053:30053
     networks:
       - adsbnet
       - traefik_proxy
@@ -406,8 +403,6 @@ services:
     restart: always
     volumes:
       - graphs1090_rrd:/var/lib/collectd/rrd
-    # ports:
-    #   - 8088:80
     networks:
       - adsbnet
       - traefik_proxy
