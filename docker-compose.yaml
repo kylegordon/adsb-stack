@@ -178,7 +178,6 @@ services:
     # devices:
     #   - /dev/bus/usb/001/004:/dev/bus/usb/001/004
     ports:
-      # - 8083:8080
       - 30003:30003
       - 30005:30005
     networks:
