@@ -20,7 +20,7 @@ services:
           - "node.hostname==planepi"
     # Not actually required until hardware is present
     # Credit to https://github.com/mikenye/docker-readsb
-    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
+    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:v4.0.4
     privileged: true
     tty: true
     container_name: readsb
@@ -64,7 +64,7 @@ services:
     # image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
     # Note - if you want to enable telegraf for use with InfluxDB/Prometheus and Grafana,
     # use the following image instead:
-    image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder:telegraf
+    image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder:telegraf-build-834
     container_name: ultrafeeder
     hostname: ultrafeeder
     restart: unless-stopped
@@ -175,7 +175,7 @@ services:
       - /var/log:size=32M
 
   Watchtower:
-    image: containrrr/watchtower:arm64v8-latest
+    image: containrrr/watchtower:arm64v8-1.7.1
     command: "--label-enable"
     container_name: Watchtower
     volumes:
