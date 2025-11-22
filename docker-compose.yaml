@@ -42,7 +42,7 @@ networks:
 
 services:
   Watchtower:
-    image: v2tec/watchtower:latest
+    image: containrrr/watchtower:1.7.1
     command: "--label-enable"
     container_name: Watchtower
     volumes:
@@ -171,7 +171,7 @@ services:
   piaware:
     # Working feed
     # Credit to https://github.com/mikenye/docker-piaware
-    image: ghcr.io/sdr-enthusiasts/docker-piaware:latest
+    image: ghcr.io/sdr-enthusiasts/docker-piaware:v10.0
     tty: true
     container_name: piaware
     restart: unless-stopped
@@ -276,7 +276,7 @@ services:
     # Working feed
     # Credit to https://github.com/mikenye/docker-flightradar24
     # image: mikenye/fr24feed:latest
-    image: ghcr.io/sdr-enthusiasts/docker-flightradar24
+    image: ghcr.io/sdr-enthusiasts/docker-flightradar24:1.0.48-0
     tty: true
     container_name: fr24feed
     restart: unless-stopped
@@ -342,7 +342,7 @@ services:
   pfclient:
     # Working feed
     # Credit to https://github.com/mikenye/docker-planefinder
-    image: ghcr.io/sdr-enthusiasts/docker-planefinder:latest
+    image: ghcr.io/sdr-enthusiasts/docker-planefinder:5.0.161
     tty: true
     container_name: pfclient
     restart: unless-stopped
@@ -379,7 +379,7 @@ services:
 
   opensky:
     # Credit to https://github.com/mikenye/docker-opensky-network
-    image: ghcr.io/sdr-enthusiasts/docker-opensky-network:latest
+    image: ghcr.io/sdr-enthusiasts/docker-opensky-network:2.1.7-1
     tty: true
     container_name: opensky
     restart: unless-stopped
