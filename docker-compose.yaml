@@ -38,29 +38,9 @@ networks:
     driver: bridge
   traefik_proxy:
     external: true
-    name: frontend_traefik_proxy
+    name: traefik_traefik_proxy
 
 services:
-  Watchtower:
-    image: v2tec/watchtower:latest
-    command: "--label-enable"
-    container_name: Watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 2 * * *
-      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS}
-      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
-      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
-    restart: unless-stopped
-
   # From https://github.com/sdr-enthusiasts/docker-acarshub/blob/main/Setting-Up-ACARSHub.MD
   # acarshub:
   #   image: ghcr.io/sdr-enthusiasts/docker-acarshub:latest
