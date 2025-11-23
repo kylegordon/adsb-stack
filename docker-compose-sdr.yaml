@@ -13,52 +13,52 @@ volumes:
       device: ":/srv/nfs4/docker_nfs/readsbpb_autogain"
 
 services:
-  readsb:
-    deploy:
-      placement:
-        constraints:
-          - "node.hostname==planepi"
-    # Not actually required until hardware is present
-    # Credit to https://github.com/mikenye/docker-readsb
-    image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
-    privileged: true
-    tty: true
-    container_name: readsb
-    restart: unless-stopped
-    devices:
-      - /dev/bus/usb:/dev/bus/usb
-    ports:
-      - 8080:8080
-      - 30005:30005
-    networks:
-      - adsbnet
-    environment:
-      - TZ=${TZ}
-      - READSB_DCFILTER=true
-      - READSB_DEVICE_TYPE=rtlsdr
-      - READSB_FIX=true
-      - READSB_GAIN=autogain
-      - READSB_LAT=${LATITUDE}
-      - READSB_LON=${LONGITUDE}
-      - READSB_MODEAC=true
-      - READSB_RX_LOCATION_ACCURACY=2
-      - READSB_STATS_RANGE=true
-      - READSB_NET_ENABLE=true
-      - INFLUXDBURL=${INFLUXDBURL}
-      - INFLUXDB_V2=true
-      - INFLUXDB_V2_BUCKET=${INFLUXDB_V2_BUCKET}
-      - INFLUXDB_V2_ORG=${INFLUXDB_V2_ORG}
-      - INFLUXDB_V2_TOKEN=${INFLUXDB_V2_TOKEN}
-    volumes:
-      - readsbpb_rrd:/run/collectd
-      - readsbpb_autogain:/run/autogain
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://172.24.32.13:12201"
-        tag: "{{.Name}}"
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+  # readsb:
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - "node.hostname==planepi"
+  #   # Not actually required until hardware is present
+  #   # Credit to https://github.com/mikenye/docker-readsb
+  #   image: ghcr.io/sdr-enthusiasts/docker-readsb-protobuf:latest
+  #   privileged: true
+  #   tty: true
+  #   container_name: readsb
+  #   restart: unless-stopped
+  #   devices:
+  #     - /dev/bus/usb:/dev/bus/usb
+  #   ports:
+  #     - 8080:8080
+  #     - 30005:30005
+  #   networks:
+  #     - adsbnet
+  #   environment:
+  #     - TZ=${TZ}
+  #     - READSB_DCFILTER=true
+  #     - READSB_DEVICE_TYPE=rtlsdr
+  #     - READSB_FIX=true
+  #     - READSB_GAIN=autogain
+  #     - READSB_LAT=${LATITUDE}
+  #     - READSB_LON=${LONGITUDE}
+  #     - READSB_MODEAC=true
+  #     - READSB_RX_LOCATION_ACCURACY=2
+  #     - READSB_STATS_RANGE=true
+  #     - READSB_NET_ENABLE=true
+  #     - INFLUXDBURL=${INFLUXDBURL}
+  #     - INFLUXDB_V2=true
+  #     - INFLUXDB_V2_BUCKET=${INFLUXDB_V2_BUCKET}
+  #     - INFLUXDB_V2_ORG=${INFLUXDB_V2_ORG}
+  #     - INFLUXDB_V2_TOKEN=${INFLUXDB_V2_TOKEN}
+  #   volumes:
+  #     - readsbpb_rrd:/run/collectd
+  #     - readsbpb_autogain:/run/autogain
+  #   logging:
+  #     driver: gelf
+  #     options:
+  #       gelf-address: "udp://172.24.32.13:12201"
+  #       tag: "{{.Name}}"
+  #   labels:
+  #     - "com.centurylinklabs.watchtower.enable=true"
 
   ultrafeeder:
     # image: ghcr.io/sdr-enthusiasts/docker-adsb-ultrafeeder
@@ -173,26 +173,3 @@ services:
       - /run:exec,size=256M
       - /tmp:size=128M
       - /var/log:size=32M
-
-  Watchtower:
-    image: containrrr/watchtower:arm64v8-latest
-    command: "--label-enable"
-    container_name: Watchtower
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    security_opt:
-      - label:disable
-    user: 0:0
-    environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_SCHEDULE=0 0 2 * * *
-      - WATCHTOWER_NOTIFICATIONS=${WATCHTOWER_NOTIFICATIONS}
-      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${WATCHTOWER_NOTIFICATION_EMAIL_FROM}
-      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT}
-      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD}
-    labels:
-      - com.centurylinklabs.watchtower.enable=true
-    restart: unless-stopped
