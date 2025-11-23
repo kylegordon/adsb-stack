@@ -25,6 +25,6 @@ else
 fi
 
 export DOCKER_HOST=ssh://${SSHUSER}@${SDRHOST}
-docker compose -f docker-compose-sdr.yaml $COMPOSE_CMD ultrafeeder Watchtower
+docker compose -f docker-compose-sdr.yaml $COMPOSE_CMD ultrafeeder
 export DOCKER_HOST=ssh://${SSHUSER}@${MAINHOST}
 docker compose $COMPOSE_CMD piaware fr24feed pfclient opensky graphs1090
